@@ -3,4 +3,4 @@ pandas
 plotly
 numpy 
 pycaret==3.3.2 
-json==4.23
+json
