@@ -2,7 +2,5 @@ streamlit
 pandas
 plotly
 numpy 
-pycaret
-openai
-dotenv
-json
+pycaret==3.3.2 
+json==4.23

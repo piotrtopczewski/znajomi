@@ -3,12 +3,13 @@ import streamlit as st
 import pandas as pd  # type: ignore
 from pycaret.clustering import load_model, predict_model  # type: ignore
 import plotly.express as px  # type: ignore
+import plotly.graph_objects as go  # type: ignore
 
-MODEL_NAME = 'welcome_survey_clustering_pipeline_v1'
+MODEL_NAME = 'welcome_survey_clustering_pipeline_v2'
 
-DATA = 'welcome_survey_simple_v1.csv'
+DATA = 'welcome_survey_simple_v2.csv'
 
-CLUSTER_NAMES_AND_DESCRIPTIONS = 'welcome_survey_cluster_names_and_descriptions_v1.json'
+CLUSTER_NAMES_AND_DESCRIPTIONS = 'welcome_survey_cluster_names_and_descriptions_v3.json'
 
 
 @st.cache_data
@@ -97,4 +98,80 @@ fig.update_layout(
     xaxis_title="Płeć",
     yaxis_title="Liczba osób",
 )
+st.plotly_chart(fig)
+
+# Tworzenie wykresu radarowego pokazującego profil grupy
+st.header("Profil grupy - wykres radarowy")
+
+# Przygotowanie danych dla wykresu radarowego
+def prepare_radar_data(df):
+    # Przygotowanie danych dla kategorii wiek
+    age_counts = df['age'].value_counts(normalize=True).sort_index()
+    
+    # Przygotowanie danych dla kategorii wykształcenie
+    edu_counts = df['edu_level'].value_counts(normalize=True)
+    
+    # Przygotowanie danych dla kategorii ulubione zwierzęta
+    animals_counts = df['fav_animals'].value_counts(normalize=True)
+    
+    # Przygotowanie danych dla kategorii ulubione miejsce
+    place_counts = df['fav_place'].value_counts(normalize=True)
+    
+    # Przygotowanie danych dla kategorii płeć
+    gender_counts = df['gender'].value_counts(normalize=True)
+    
+    # Łączenie wszystkich danych
+    categories = []
+    values = []
+    
+    for category, value in age_counts.items():
+        categories.append(f"Wiek: {category}")
+        values.append(value)
+    
+    for category, value in edu_counts.items():
+        categories.append(f"Edu: {category}")
+        values.append(value)
+    
+    for category, value in animals_counts.items():
+        categories.append(f"Zwierzęta: {category}")
+        values.append(value)
+    
+    for category, value in place_counts.items():
+        categories.append(f"Miejsce: {category}")
+        values.append(value)
+    
+    for category, value in gender_counts.items():
+        categories.append(f"Płeć: {category}")
+        values.append(value)
+    
+    return categories, values
+
+# Generowanie danych dla wykresu radarowego
+categories, values = prepare_radar_data(same_cluster_df)
+
+# Dodanie ostatniego punktu aby zamknąć wykres (połączyć koniec z początkiem)
+categories.append(categories[0])
+values.append(values[0])
+
+# Tworzenie wykresu radarowego za pomocą plotly
+fig = go.Figure()
+
+fig.add_trace(go.Scatterpolar(
+    r=values,
+    theta=categories,
+    fill='toself',
+    name=f'Grupa {predicted_cluster_data["name"]}'
+))
+
+fig.update_layout(
+    polar=dict(
+        radialaxis=dict(
+            visible=True,
+            range=[0, 1]
+        )
+    ),
+    title=f"Charakterystyka grupy {predicted_cluster_data['name']}",
+    showlegend=True
+)
+
 st.plotly_chart(fig)
